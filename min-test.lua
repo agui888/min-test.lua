@@ -1,9 +1,12 @@
 local _ = require 'shim'
 
-local queue = {}
+local result = {
+	passed = 0,
+	failed = 0
+}
 
 local function ok(val, msg)
-	assert(val, msg)
+	assert(true == val, msg)
 end
 
 local function equal(val, expected, msg)
@@ -39,8 +42,10 @@ local function execTest(title, func)
 	local t = getT()
 	local ok, ret = pcall(func, t)
 	if ok then
+		result.passed = result.passed + 1
 		report(ok, title)
 	else
+		result.failed = result.failed + 1
 		local info = debug.getinfo(1)
 		report(ok, title, info.short_src .. ':' .. info.currentline)
 	end
@@ -56,4 +61,20 @@ local function test(title, func)
 	end
 end
 
-return test
+local function printResult()
+	local isPassed = true
+	local exitCode = 0
+	if 0 ~= result.failed then
+		isPassed = false
+		exitCode = 1
+	end
+	local resultStr = string.format('\npassed: %d, failed: %d', result.passed, result.failed)
+	print(resultStr)
+	os.exit(exitCode)
+end
+
+return {
+	test = test,
+	result = result,
+	printResult = printResult
+}
